@@ -1,0 +1,73 @@
+Index: CodeSniffer/Standards/Squiz/Tests/Commenting/FunctionCommentUnitTest.inc
+===================================================================
+--- CodeSniffer/Standards/Squiz/Tests/Commenting/FunctionCommentUnitTest.inc	(revision 303015)
++++ CodeSniffer/Standards/Squiz/Tests/Commenting/FunctionCommentUnitTest.inc	(working copy)
+@@ -478,26 +478,39 @@
+ }//end test()
+ 
+ /**
+- * Comment.
++ * Typehint, doc comment both have namespaces -> ok.
+  *
+- * @param \other\namespace\item $test An argument.
++ * @param \other\ns\item $test An argument.
+  *
+  * @return mixed
+  */
+-function test(\other\namespace\item $test)
++function test(\other\ns\item $test)
+ {
+    return $test;
+ 
+ }//end test()
+ 
+ /**
+- * Comment.
++ * Typehint from namespace, doc comment not -> error.
+  *
+  * @param item $test An argument.
+  *
+  * @return mixed
+  */
+-function test(\other\namespace\item $test)
++function test(\other\ns\item $test)
++{
++   return $test;
++
++}//end test()
++
++/**
++ * Default value is constant from other namespace.
++ *
++ * @param \first\ns\item $test An argument.
++ *
++ * @return mixed
++ */
++function test(\first\ns\item $test = \second\ns::CONST)
+ {
+    return $test;
+ 
+Index: CodeSniffer/File.php
+===================================================================
+--- CodeSniffer/File.php	(revision 303015)
++++ CodeSniffer/File.php	(working copy)
+@@ -1966,12 +1966,16 @@
+                     }
+                 }
+ 
+-                $typeHint .= $this->_tokens[$i]['content'];
++                if (is_null($defaultStart)) {
++                    $typeHint .= $this->_tokens[$i]['content'];
++                }
++
+                 break;
+             case T_NS_SEPARATOR:
+-            case T_NAMESPACE:
+                 // Part of a type hint.
+-                $typeHint .= $this->_tokens[$i]['content'];
++                if (is_null($defaultStart)) {
++                    $typeHint .= $this->_tokens[$i]['content'];
++                }
+                 break;
+             case T_CLOSE_PARENTHESIS:
+             case T_COMMA:
